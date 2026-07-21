@@ -1,0 +1,4 @@
+#!/bin/sh
+cd `dirname $0`
+../src/offload_app -n .:../src $*
+# for shared lib, use: opp_run -l ../src/offload_app -n .:../src $*

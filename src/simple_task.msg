@@ -16,7 +16,8 @@
 //
 // TODO generated message class
 //
-packet Simple_task {
+message Simple_task {
+    int taskCounter;
     int numBytes;
     double complexityFactor;
 }

@@ -23,16 +23,18 @@ class Simple_task;
  * //
  * // TODO generated message class
  * //
- * packet Simple_task
+ * message Simple_task
  * {
+ *     int taskCounter;
  *     int numBytes;
  *     double complexityFactor;
  * }
  * </pre>
  */
-class Simple_task : public ::omnetpp::cPacket
+class Simple_task : public ::omnetpp::cMessage
 {
   protected:
+    int taskCounter = 0;
     int numBytes = 0;
     double complexityFactor = 0;
 
@@ -50,6 +52,9 @@ class Simple_task : public ::omnetpp::cPacket
     virtual Simple_task *dup() const override {return new Simple_task(*this);}
     virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    virtual int getTaskCounter() const;
+    virtual void setTaskCounter(int taskCounter);
 
     virtual int getNumBytes() const;
     virtual void setNumBytes(int numBytes);

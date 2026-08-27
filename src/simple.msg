@@ -17,7 +17,12 @@
 // TODO generated message class
 //
 message Simple_task {
-    int taskCounter;
+    int taskId;
     int numBytes;
     double complexityFactor;
+}
+
+message Simple_result {
+	int resultId;
+	int numBytes;
 }

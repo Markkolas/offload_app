@@ -1,9 +1,9 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.3 from simple_task.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.3 from simple.msg.
 //
 
-#ifndef __SIMPLE_TASK_M_H
-#define __SIMPLE_TASK_M_H
+#ifndef __SIMPLE_M_H
+#define __SIMPLE_M_H
 
 #if defined(__clang__)
 #  pragma clang diagnostic ignored "-Wreserved-id-macro"
@@ -17,15 +17,16 @@
 #endif
 
 class Simple_task;
+class Simple_result;
 /**
- * Class generated from <tt>simple_task.msg:19</tt> by opp_msgtool.
+ * Class generated from <tt>simple.msg:19</tt> by opp_msgtool.
  * <pre>
  * //
  * // TODO generated message class
  * //
  * message Simple_task
  * {
- *     int taskCounter;
+ *     int taskId;
  *     int numBytes;
  *     double complexityFactor;
  * }
@@ -34,7 +35,7 @@ class Simple_task;
 class Simple_task : public ::omnetpp::cMessage
 {
   protected:
-    int taskCounter = 0;
+    int taskId = 0;
     int numBytes = 0;
     double complexityFactor = 0;
 
@@ -53,8 +54,8 @@ class Simple_task : public ::omnetpp::cMessage
     virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
 
-    virtual int getTaskCounter() const;
-    virtual void setTaskCounter(int taskCounter);
+    virtual int getTaskId() const;
+    virtual void setTaskId(int taskId);
 
     virtual int getNumBytes() const;
     virtual void setNumBytes(int numBytes);
@@ -66,12 +67,54 @@ class Simple_task : public ::omnetpp::cMessage
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const Simple_task& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, Simple_task& obj) {obj.parsimUnpack(b);}
 
+/**
+ * Class generated from <tt>simple.msg:25</tt> by opp_msgtool.
+ * <pre>
+ * message Simple_result
+ * {
+ *     int resultId;
+ *     int numBytes;
+ * }
+ * </pre>
+ */
+class Simple_result : public ::omnetpp::cMessage
+{
+  protected:
+    int resultId = 0;
+    int numBytes = 0;
+
+  private:
+    void copy(const Simple_result& other);
+
+  protected:
+    bool operator==(const Simple_result&) = delete;
+
+  public:
+    Simple_result(const char *name=nullptr, short kind=0);
+    Simple_result(const Simple_result& other);
+    virtual ~Simple_result();
+    Simple_result& operator=(const Simple_result& other);
+    virtual Simple_result *dup() const override {return new Simple_result(*this);}
+    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
+    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    virtual int getResultId() const;
+    virtual void setResultId(int resultId);
+
+    virtual int getNumBytes() const;
+    virtual void setNumBytes(int numBytes);
+};
+
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const Simple_result& obj) {obj.parsimPack(b);}
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, Simple_result& obj) {obj.parsimUnpack(b);}
+
 
 namespace omnetpp {
 
 template<> inline Simple_task *fromAnyPtr(any_ptr ptr) { return check_and_cast<Simple_task*>(ptr.get<cObject>()); }
+template<> inline Simple_result *fromAnyPtr(any_ptr ptr) { return check_and_cast<Simple_result*>(ptr.get<cObject>()); }
 
 }  // namespace omnetpp
 
-#endif // ifndef __SIMPLE_TASK_M_H
+#endif // ifndef __SIMPLE_M_H
 

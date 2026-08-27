@@ -1,11 +1,11 @@
-simple User
+simple SimpleUser
 {
     gates:
         input in;
         output out;
 }
 
-simple Server
+simple SimpleServer
 {
 	gates:
 	    input in;
@@ -15,8 +15,8 @@ simple Server
 network SimpleNet
 {
 	submodules:
-	    user: User;
-	    server: Server;
+	    user: SimpleUser;
+	    server: SimpleServer;
 	
 	connections:
 	    user.out --> { delay = 100ms; } --> server.in;

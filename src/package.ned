@@ -15,6 +15,16 @@ simple SimpleServer
 	    output out;
 }
 
+channel DynDelayCh extends ned.DelayChannel
+{
+	parameters:
+	    // Extended modules use the C++ of the base by default
+	    // If a NED module inherits bith the NED and C++ class,
+	    // use this instead
+	    @class(DynDelayCh);
+	    volatile double DynDelay @unit(s) = default(100ms);
+}
+
 network SimpleNet
 {
 	submodules:
@@ -22,6 +32,6 @@ network SimpleNet
 	    server: SimpleServer;
 	
 	connections:
-	    user.out --> { delay = 100ms; } --> server.in;
-	    user.in <-- { delay = 100ms; } <-- server.out;
+	    user.out --> DynDelayCh --> server.in;
+	    user.in <-- DynDelayCh <-- server.out;
 }

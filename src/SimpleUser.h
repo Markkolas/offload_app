@@ -27,9 +27,10 @@ private:
     omnetpp::cArray task_buffer{"tx_buff"};
 
     int countMsg = 0;
-    int lastResult = 0;
 
     Simple_task * getTaskFromId(int Id);
+
+    omnetpp::simsignal_t offDelaySig;
 protected:
     virtual void initialize() override;
     virtual void handleMessage(omnetpp::cMessage *msg) override;

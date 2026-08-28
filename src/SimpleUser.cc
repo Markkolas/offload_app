@@ -22,6 +22,7 @@ Define_Module(SimpleUser);
 // User implementation
 void SimpleUser::initialize(){
     EV << "User is alive!";
+    offDelaySig = registerSignal("OffDelay");
     timerEvent = new cMessage("TimerEvent");
     scheduleAfter(0.1, timerEvent);
 }
@@ -56,7 +57,10 @@ void SimpleUser::handleMessage(cMessage *msg){
 
         EV << "--- Offloading delay: " << off_delay << " ---\n";
 
-        delete(msg);
+        emit(offDelaySig, off_delay.dbl());
+
+        delete result;
+        delete ret_task;
     }
     else{
         throw cRuntimeError("Ups, that should not happen. Message with name %s arrived", msg->getName());

@@ -1,5 +1,8 @@
 simple SimpleUser
 {
+    parameters:
+        @signal[OffDelay](type="double");
+        @statistic[offDelayStat](title="Offloading delay"; source=OffDelay; record=vector,mean,stats);
     gates:
         input in;
         output out;

@@ -22,6 +22,8 @@ Define_Module(SimpleServer);
 //Server implementation
 void SimpleServer::initialize(){
     EV << "Server is alive!";
+    qLengthSig = registerSignal("QueueLength");
+    qFullEvent = registerSignal("QueueFull");
 }
 
 void SimpleServer::handleMessage(cMessage *msg){
@@ -29,33 +31,74 @@ void SimpleServer::handleMessage(cMessage *msg){
         EV << "Message " << msg->getName() << " from client received! Deleting it \n";
     }
     else if(strstr(msg->getName(), "task") != nullptr){
-        EV << "Task " << msg->getName() << " received. Preparing to process.\n";
+        EV << "Task " << msg->getName() << " received. Saving in task queue.\n";
 
         Simple_task *task = check_and_cast<Simple_task *>(msg);
-        EV << "Number of bytes: " << task->getNumBytes() << "\nComplexity factor: " << task->getComplexityFactor();
-        EV << "\nStarting offload process\n";
+        bool q_full = saveTask(task);
 
-        simtime_t pDelay = processTask(task);
-        EV << "Processing will be completed after " << pDelay << " ms\n";
+        if(q_full){
+            EV << "Queue is full!" << endl;
+            fullq_events++;
+            emit(qFullEvent, fullq_events);
+        }
+        else if (procEvent == nullptr){ // Queue was empty, start first q timer
+            procEvent = new cMessage("ProcTimer");
+            simtime_t pDelay = processTask(task);
+            scheduleAfter(pDelay, procEvent);
+        }
+    }
+    else if(msg == procEvent){
+        Simple_task * task = (Simple_task *)queue_buff.pop();
 
-        char resultName[20];
-        snprintf(resultName, sizeof(resultName), "result-%d", task->getTaskId());
+        sendResult(task);
+        delete(task);
 
-        Simple_result *result = new Simple_result(resultName);
-        result->setResultId(task->getTaskId());
-        result->setNumBytes(uniform(1, 100));
-        result->setTimestamp(getSimulation()->getSimTime() + pDelay);
-
-        sendDelayed(result, pDelay, "out");
+        if(queue_buff.getLength() == 0){ //Queue is empty, destroy timer
+            delete(procEvent);
+            procEvent = nullptr;
+        }
+        else{
+            simtime_t pDelay = processTask((Simple_task *)queue_buff.front());
+            scheduleAfter(pDelay, procEvent);
+        }
     }
     else{
         throw cRuntimeError("Ups, that should not happen. Message with name %s arrived", msg->getName());
     }
-    delete(msg);
 }
 
 simtime_t SimpleServer::processTask(Simple_task *task){
+    EV << "Number of bytes: " << task->getNumBytes() << "\nComplexity factor: " << task->getComplexityFactor();
+    EV << "\nStarting offload process\n";
+
     // I need to be carefull with data types in operations
     double ideal_delay = (double)(task->getNumBytes())/(double)(CPU_CYCLES);
-    return simtime_t((ideal_delay*task->getComplexityFactor())/(1e3)); // milliseconds
+    simtime_t pDelay = simtime_t((ideal_delay*task->getComplexityFactor())/(1e3)); // milliseconds
+
+    EV << "Processing will be completed after " << pDelay << " ms\n";
+    return pDelay;
+}
+
+bool SimpleServer::saveTask(Simple_task *task){
+    bool is_full = true;
+    emit(qLengthSig, queue_buff.getLength());
+
+    if(queue_buff.getLength() < QUEUE_SIZE){
+        queue_buff.insert(task);
+        is_full = false;
+    }
+
+    return is_full;
+}
+
+void SimpleServer::sendResult(Simple_task *task) {
+    char resultName[20];
+    snprintf(resultName, sizeof(resultName), "result-%d", task->getTaskId());
+
+    Simple_result *result = new Simple_result(resultName);
+    result->setResultId(task->getTaskId());
+    result->setNumBytes(uniform(1, 100));
+    result->setTimestamp(getSimulation()->getSimTime());
+
+    send(result, "out");
 }

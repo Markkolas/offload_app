@@ -24,7 +24,7 @@ void SimpleUser::initialize(){
     EV << "User is alive!";
     offDelaySig = registerSignal("OffDelay");
     timerEvent = new cMessage("TimerEvent");
-    scheduleAfter(0.1, timerEvent);
+    scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent);
 }
 
 void SimpleUser::handleMessage(cMessage *msg){
@@ -41,7 +41,7 @@ void SimpleUser::handleMessage(cMessage *msg){
 
         task_buffer.add(new Simple_task(*task)); // Store a copy. Beware of OMNET++ ownership
         send(task, "out");
-        scheduleAfter(exponential(0.1), timerEvent);
+        scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent);
     }
     else if(strstr(msg->getName(), "result") != nullptr){
         char bubbleMessage[100];
@@ -55,7 +55,7 @@ void SimpleUser::handleMessage(cMessage *msg){
 
         simtime_t off_delay = result->getTimestamp() - ret_task->getTimestamp();
 
-        EV << "--- Offloading delay: " << off_delay << " ---\n";
+        EV << "--- Offloading delay: " << off_delay << " ms ---\n";
 
         emit(offDelaySig, off_delay.dbl());
 

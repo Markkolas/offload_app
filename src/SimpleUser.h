@@ -28,14 +28,14 @@ private:
 
     int countMsg = 0;
 
+    omnetpp::cMessage *timerEvent = nullptr;
+
     Simple_task * getTaskFromId(int Id);
 
     omnetpp::simsignal_t offDelaySig;
 protected:
     virtual void initialize() override;
     virtual void handleMessage(omnetpp::cMessage *msg) override;
-
-    omnetpp::cMessage *timerEvent = nullptr;
 
 public:
     ~SimpleUser();

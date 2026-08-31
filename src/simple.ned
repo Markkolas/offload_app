@@ -3,6 +3,8 @@ simple SimpleUser
     parameters:
         @signal[OffDelay](type="double");
         @statistic[offDelayStat](title="Offloading delay"; source=OffDelay; record=vector,mean,stats);
+
+        double tasksPerSecond = default(10);
     gates:
         input in;
         output out;
@@ -10,6 +12,11 @@ simple SimpleUser
 
 simple SimpleServer
 {
+    parameters:
+        @signal[QueueLength](type="int");
+        @signal[QueueFull](type="int");
+	    @statistic[QueueLengthStat](title="Qeueue length"; source=QueueLength; record=vector,mean);
+	    @statistic[QueueFullStat](title="Queue full events"; source=QueueFull; record=vector,count);
 	gates:
 	    input in;
 	    output out;

@@ -22,12 +22,23 @@
 
 class SimpleServer : public omnetpp::cSimpleModule {
 private:
-    const int CPU_CYCLES = 3000; //MHz
+    const int CPU_CYCLES = 300; //MHz
     const int N_CORES = 8;
+    const int QUEUE_SIZE = 100;
+
+    int fullq_events = 0;
+
+    omnetpp::cMessage *procEvent = nullptr; // May be a good idea to use smart pointers for this
+
+    omnetpp::cQueue queue_buff{"server queue"};
+
+    omnetpp::simsignal_t qLengthSig, qFullEvent;
 protected:
     virtual void initialize() override;
     virtual void handleMessage(omnetpp::cMessage *msg) override;
     omnetpp::simtime_t processTask(Simple_task *);
+    bool saveTask(Simple_task *);
+    void sendResult(Simple_task *);
 };
 
 #endif /* SIMPLESERVER_H_ */

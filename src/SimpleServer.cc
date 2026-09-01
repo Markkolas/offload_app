@@ -24,16 +24,19 @@ void SimpleServer::initialize(){
     EV << "Server is alive!";
     qLengthSig = registerSignal("QueueLength");
     qFullEvent = registerSignal("QueueFull");
+    oGate = gate("out");
 }
 
 void SimpleServer::handleMessage(cMessage *msg){
     if(strcmp(msg->getName(), "Test")==0){
         EV << "Message " << msg->getName() << " from client received! Deleting it \n";
     }
-    else if(strstr(msg->getName(), "task") != nullptr){
-        EV << "Task " << msg->getName() << " received. Saving in task queue.\n";
+    else if(dynamic_cast<L2multi *>(msg) != nullptr){
+        L2multi *L2packet = (L2multi *)msg; //TODO: Refractor this with smart pointers
+        Simple_task *task = check_and_cast<Simple_task *>(L2packet->decapsulate());
 
-        Simple_task *task = check_and_cast<Simple_task *>(msg);
+        EV << "Task " << task->getName() << " received. Saving in task queue.\n";
+
         bool q_full = saveTask(task);
 
         if(q_full){
@@ -47,20 +50,31 @@ void SimpleServer::handleMessage(cMessage *msg){
             simtime_t pDelay = processTask(task);
             scheduleAfter(pDelay, procEvent);
         }
+
+        delete(L2packet);
     }
     else if(msg == procEvent){
-        Simple_task *task = (Simple_task *)queue_buff.pop();
-
-        sendResult(task);
-        delete(task);
-
-        if(queue_buff.getLength() == 0){ //Queue is empty, destroy timer
-            delete(procEvent);
-            procEvent = nullptr;
+        // Check if is channel is available, else wait
+        if(oGate->getChannel()->isBusy()){
+            EV << "Channel is busy. Sender has to wait" << endl;
+            scheduleAt(oGate->getChannel()->getTransmissionFinishTime(), procEvent);
         }
         else{
-            simtime_t pDelay = processTask((Simple_task *)queue_buff.front());
-            scheduleAfter(pDelay, procEvent);
+            EV << "Timer expired and channel empty, sending result\n";
+
+            Simple_task *task = (Simple_task *)queue_buff.pop();
+
+            sendResult(task);
+            delete(task);
+
+            if(queue_buff.getLength() == 0){ //Queue is empty, destroy timer
+                delete(procEvent);
+                procEvent = nullptr;
+            }
+            else{
+                simtime_t pDelay = processTask((Simple_task *)queue_buff.front());
+                scheduleAfter(pDelay, procEvent);
+            }
         }
     }
     else{
@@ -101,5 +115,12 @@ void SimpleServer::sendResult(Simple_task *task) {
     result->setByteLength(uniform(1, 100));
     result->setTimestamp(getSimulation()->getSimTime());
 
-    send(result, "out");
+    strcat(resultName, "-L2");
+    L2multi *L2packet = new L2multi(resultName);
+    L2packet->encapsulate(result);
+    send(L2packet, "out");
+}
+
+SimpleServer::~SimpleServer(){
+    cancelAndDelete(procEvent);
 }

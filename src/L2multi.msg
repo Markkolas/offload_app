@@ -13,34 +13,11 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#ifndef SIMPLEUSER_H_
-#define SIMPLEUSER_H_
-
-#include <omnetpp.h>
-
-#include "simple_m.h"
-#include "L2multi_m.h"
-
-class SimpleUser : public omnetpp::cSimpleModule  {
-private:
-    const int MIN_TASK_S = 100;
-    const int MAX_TASK_S = 10000;
-    omnetpp::cArray task_buffer{"tx_buff"};
-    omnetpp::cGate *oGate;
-
-    int countMsg = 0;
-
-    omnetpp::cMessage *timerEvent = nullptr;
-
-    Simple_task * getTaskFromId(int Id);
-
-    omnetpp::simsignal_t offDelaySig;
-protected:
-    virtual void initialize() override;
-    virtual void handleMessage(omnetpp::cMessage *msg) override;
-
-public:
-    ~SimpleUser();
-};
-
-#endif /* SIMPLEUSER_H_ */
+//
+// TODO generated message class
+//
+packet L2multi {
+    int source;
+    int destination;
+    bitLength = 64;
+}

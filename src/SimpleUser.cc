@@ -24,19 +24,19 @@ void SimpleUser::initialize(){
     EV << "User is alive!";
     offDelaySig = registerSignal("OffDelay");
     timerEvent = new cMessage("TimerEvent");
-    iGate = gate("out");
+    oGate = gate("out");
     scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent);
 }
 
 void SimpleUser::handleMessage(cMessage *msg){
     if(msg == timerEvent){
         // Check if is channel is available, else wait
-        if(iGate->getChannel()->isBusy()){
+        if(oGate->getChannel()->isBusy()){
             EV << "Channel is busy. Sender has to wait" << endl;
-            scheduleAt(iGate->getChannel()->getTransmissionFinishTime(), timerEvent);
+            scheduleAt(oGate->getChannel()->getTransmissionFinishTime(), timerEvent);
         }
         else{
-            EV << "Timer expired and channel empty, sending message\n";
+            EV << "Timer expired and channel empty, sending task\n";
 
             char taskName[20];
             snprintf(taskName, sizeof(taskName), "task-%d", countMsg);
@@ -47,18 +47,24 @@ void SimpleUser::handleMessage(cMessage *msg){
             task->setTimestamp();
 
             task_buffer.add(new Simple_task(*task)); // Store a copy. Beware of OMNET++ ownership
-            send(task, "out");
+
+            strcat(taskName, "-L2");
+            L2multi *L2packet = new L2multi(taskName);
+            L2packet->encapsulate(task);
+            send(L2packet, "out");
             scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent);
         }
     }
-    else if(strstr(msg->getName(), "result") != nullptr){
+    else if(dynamic_cast<L2multi *>(msg) != nullptr){
         char bubbleMessage[100];
-        snprintf(bubbleMessage, sizeof(bubbleMessage), "%s arrived!", msg->getName());
+        L2multi *L2packet = (L2multi *)msg; //TODO: Refractor this with smart pointers
+        Simple_result *result = check_and_cast<Simple_result *>(L2packet->decapsulate());
+
+        snprintf(bubbleMessage, sizeof(bubbleMessage), "%s arrived!", result->getName());
         bubble(bubbleMessage);
 
-        EV << msg->getName() << " received. Finding offloading delay\n";
+        EV << result->getName() << " received. Finding offloading delay\n";
 
-        Simple_result *result = check_and_cast<Simple_result *>(msg);
         Simple_task *ret_task = getTaskFromId(result->getResultId());
 
         simtime_t off_delay = result->getTimestamp() - ret_task->getTimestamp();
@@ -67,6 +73,7 @@ void SimpleUser::handleMessage(cMessage *msg){
 
         emit(offDelaySig, off_delay.dbl());
 
+        delete L2packet;
         delete result;
         delete ret_task;
     }

@@ -31,8 +31,8 @@ channel DynDelayCh extends ned.DatarateChannel
 	    @class(DynDelayCh);
 	    volatile double DynDelay @unit(s) = default(100ms);
 	
-	    datarate = 1Mbps;
-	    delay = 10ms;
+	    datarate = default(1Mbps);
+	    delay = default(10ms);
 }
 
 network SimpleNet

@@ -16,9 +16,10 @@
 #ifndef SIMPLESERVER_H_
 #define SIMPLESERVER_H_
 
-#import <omnetpp.h>
+#include <omnetpp.h>
 
-#import "simple_m.h"
+#include "simple_m.h"
+#include "L2multi_m.h"
 
 class SimpleServer : public omnetpp::cSimpleModule {
 private:
@@ -30,15 +31,21 @@ private:
 
     omnetpp::cMessage *procEvent = nullptr; // May be a good idea to use smart pointers for this
 
+    omnetpp::cGate *oGate;
+
     omnetpp::cQueue queue_buff{"server queue"};
 
     omnetpp::simsignal_t qLengthSig, qFullEvent;
+
 protected:
     virtual void initialize() override;
     virtual void handleMessage(omnetpp::cMessage *msg) override;
     omnetpp::simtime_t processTask(Simple_task *);
     bool saveTask(Simple_task *);
     void sendResult(Simple_task *);
+
+public:
+    ~SimpleServer();
 };
 
 #endif /* SIMPLESERVER_H_ */

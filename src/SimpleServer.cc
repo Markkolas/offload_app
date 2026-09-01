@@ -25,6 +25,18 @@ void SimpleServer::initialize(){
     qLengthSig = registerSignal("QueueLength");
     qFullEvent = registerSignal("QueueFull");
     oGate = gate("out");
+
+    CPU_CYCLES = par("CPU_CYCLES").intValue();
+    N_CORES = par("N_CORES").intValue();
+    QUEUE_SIZE = par("QUEUE_SIZE").intValue();
+
+    if(N_CORES > MAX_CORES)
+        throw cRuntimeError("Configured cores exceeds maximum. Change maximum in sources.");
+
+    // Create message timers
+    for(int i = 0; i < N_CORES; i++){
+        core[i].procEvent = new cMessage("ProcTimer", i);
+    }
 }
 
 void SimpleServer::handleMessage(cMessage *msg){
@@ -45,35 +57,40 @@ void SimpleServer::handleMessage(cMessage *msg){
             emit(qFullEvent, fullq_events);
             delete(task);
         }
-        else if (procEvent == nullptr){ // Queue was empty, start first q timer
-            procEvent = new cMessage("ProcTimer");
-            simtime_t pDelay = processTask(task);
-            scheduleAfter(pDelay, procEvent);
+        else{ // Check if there are any idle cores. Note how cores always search for more tasks before idling
+            for(int i = 0; i < N_CORES; i++){
+                if(core[i].task == nullptr){
+                    core[i].task = task;
+                    simtime_t pDelay = processTask(core[i].task);
+                    scheduleAfter(pDelay, core[i].procEvent);
+                    break; //Important
+                }
+            }
         }
 
         delete(L2packet);
     }
-    else if(msg == procEvent){
+    else if(strcmp("ProcTimer", msg->getName()) == 0){
+        int n_core = msg->getKind();
         // Check if is channel is available, else wait
         if(oGate->getChannel()->isBusy()){
             EV << "Channel is busy. Sender has to wait" << endl;
-            scheduleAt(oGate->getChannel()->getTransmissionFinishTime(), procEvent);
+            scheduleAt(oGate->getChannel()->getTransmissionFinishTime(), msg);
         }
         else{
-            EV << "Timer expired and channel empty, sending result\n";
+            EV << "Timer expired and channel empty, CORE[" << n_core << "] sending a result" << endl;
 
-            Simple_task *task = (Simple_task *)queue_buff.pop();
+            if(queue_buff.remove(core[n_core].task) == nullptr)
+                throw cRuntimeError("Uh oh, a core tried to delete a nonexisting task");
 
-            sendResult(task);
-            delete(task);
+            sendResult(core[n_core].task);
+            delete(core[n_core].task);
 
-            if(queue_buff.getLength() == 0){ //Queue is empty, destroy timer
-                delete(procEvent);
-                procEvent = nullptr;
-            }
-            else{
-                simtime_t pDelay = processTask((Simple_task *)queue_buff.front());
-                scheduleAfter(pDelay, procEvent);
+            core[n_core].task = findAvailableTask(n_core);
+
+            if(core[n_core].task != nullptr){
+                simtime_t pDelay = processTask(core[n_core].task);
+                scheduleAfter(pDelay, msg);
             }
         }
     }
@@ -121,6 +138,29 @@ void SimpleServer::sendResult(Simple_task *task) {
     send(L2packet, "out");
 }
 
+Simple_task * SimpleServer::findAvailableTask(int n_core){
+    for(cQueue::Iterator iter(queue_buff); !iter.end(); iter++){
+        Simple_task *task = (Simple_task*) *iter;
+        bool is_executing = false;
+
+        for(int i = 0; i<N_CORES; i++){
+            if(i != n_core){
+                if(task == core[i].task){
+                    is_executing = true;
+                    break; // Pass to the next task
+                }
+            }
+        }
+
+        if(!is_executing){
+            return task;
+        }
+    }
+
+    return nullptr;
+}
+
 SimpleServer::~SimpleServer(){
-    cancelAndDelete(procEvent);
+    for(int i=0; i<N_CORES; i++)
+        cancelAndDelete(core[i].procEvent);
 }

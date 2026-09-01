@@ -21,15 +21,20 @@
 #include "simple_m.h"
 #include "L2multi_m.h"
 
+#define MAX_CORES 128 //Dont want to use vectors
+
 class SimpleServer : public omnetpp::cSimpleModule {
 private:
-    const int CPU_CYCLES = 300; //MHz
-    const int N_CORES = 8;
-    const int QUEUE_SIZE = 100;
+    int CPU_CYCLES;
+    int N_CORES;
+    int QUEUE_SIZE;
+
+    struct Core{
+        omnetpp::cMessage *procEvent = nullptr; // May be a good idea to use smart pointers for this
+        Simple_task *task = nullptr;
+    }core[MAX_CORES];
 
     int fullq_events = 0;
-
-    omnetpp::cMessage *procEvent = nullptr; // May be a good idea to use smart pointers for this
 
     omnetpp::cGate *oGate;
 
@@ -40,6 +45,7 @@ private:
 protected:
     virtual void initialize() override;
     virtual void handleMessage(omnetpp::cMessage *msg) override;
+    Simple_task * findAvailableTask(int core);
     omnetpp::simtime_t processTask(Simple_task *);
     bool saveTask(Simple_task *);
     void sendResult(Simple_task *);

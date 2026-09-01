@@ -152,11 +152,11 @@ void doParsimUnpacking(omnetpp::cCommBuffer *, T& t)
 
 Register_Class(Simple_task)
 
-Simple_task::Simple_task(const char *name, short kind) : ::omnetpp::cMessage(name, kind)
+Simple_task::Simple_task(const char *name, short kind) : ::omnetpp::cPacket(name, kind)
 {
 }
 
-Simple_task::Simple_task(const Simple_task& other) : ::omnetpp::cMessage(other)
+Simple_task::Simple_task(const Simple_task& other) : ::omnetpp::cPacket(other)
 {
     copy(other);
 }
@@ -168,7 +168,7 @@ Simple_task::~Simple_task()
 Simple_task& Simple_task::operator=(const Simple_task& other)
 {
     if (this == &other) return *this;
-    ::omnetpp::cMessage::operator=(other);
+    ::omnetpp::cPacket::operator=(other);
     copy(other);
     return *this;
 }
@@ -176,23 +176,20 @@ Simple_task& Simple_task::operator=(const Simple_task& other)
 void Simple_task::copy(const Simple_task& other)
 {
     this->taskId = other.taskId;
-    this->numBytes = other.numBytes;
     this->complexityFactor = other.complexityFactor;
 }
 
 void Simple_task::parsimPack(omnetpp::cCommBuffer *b) const
 {
-    ::omnetpp::cMessage::parsimPack(b);
+    ::omnetpp::cPacket::parsimPack(b);
     doParsimPacking(b,this->taskId);
-    doParsimPacking(b,this->numBytes);
     doParsimPacking(b,this->complexityFactor);
 }
 
 void Simple_task::parsimUnpack(omnetpp::cCommBuffer *b)
 {
-    ::omnetpp::cMessage::parsimUnpack(b);
+    ::omnetpp::cPacket::parsimUnpack(b);
     doParsimUnpacking(b,this->taskId);
-    doParsimUnpacking(b,this->numBytes);
     doParsimUnpacking(b,this->complexityFactor);
 }
 
@@ -204,16 +201,6 @@ int Simple_task::getTaskId() const
 void Simple_task::setTaskId(int taskId)
 {
     this->taskId = taskId;
-}
-
-int Simple_task::getNumBytes() const
-{
-    return this->numBytes;
-}
-
-void Simple_task::setNumBytes(int numBytes)
-{
-    this->numBytes = numBytes;
 }
 
 double Simple_task::getComplexityFactor() const
@@ -232,7 +219,6 @@ class Simple_taskDescriptor : public omnetpp::cClassDescriptor
     mutable const char **propertyNames;
     enum FieldConstants {
         FIELD_taskId,
-        FIELD_numBytes,
         FIELD_complexityFactor,
     };
   public:
@@ -265,7 +251,7 @@ class Simple_taskDescriptor : public omnetpp::cClassDescriptor
 
 Register_ClassDescriptor(Simple_taskDescriptor)
 
-Simple_taskDescriptor::Simple_taskDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(Simple_task)), "omnetpp::cMessage")
+Simple_taskDescriptor::Simple_taskDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(Simple_task)), "omnetpp::cPacket")
 {
     propertyNames = nullptr;
 }
@@ -300,7 +286,7 @@ const char *Simple_taskDescriptor::getProperty(const char *propertyName) const
 int Simple_taskDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 3+base->getFieldCount() : 3;
+    return base ? 2+base->getFieldCount() : 2;
 }
 
 unsigned int Simple_taskDescriptor::getFieldTypeFlags(int field) const
@@ -313,10 +299,9 @@ unsigned int Simple_taskDescriptor::getFieldTypeFlags(int field) const
     }
     static unsigned int fieldTypeFlags[] = {
         FD_ISEDITABLE,    // FIELD_taskId
-        FD_ISEDITABLE,    // FIELD_numBytes
         FD_ISEDITABLE,    // FIELD_complexityFactor
     };
-    return (field >= 0 && field < 3) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 2) ? fieldTypeFlags[field] : 0;
 }
 
 const char *Simple_taskDescriptor::getFieldName(int field) const
@@ -329,10 +314,9 @@ const char *Simple_taskDescriptor::getFieldName(int field) const
     }
     static const char *fieldNames[] = {
         "taskId",
-        "numBytes",
         "complexityFactor",
     };
-    return (field >= 0 && field < 3) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 2) ? fieldNames[field] : nullptr;
 }
 
 int Simple_taskDescriptor::findField(const char *fieldName) const
@@ -340,8 +324,7 @@ int Simple_taskDescriptor::findField(const char *fieldName) const
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     int baseIndex = base ? base->getFieldCount() : 0;
     if (strcmp(fieldName, "taskId") == 0) return baseIndex + 0;
-    if (strcmp(fieldName, "numBytes") == 0) return baseIndex + 1;
-    if (strcmp(fieldName, "complexityFactor") == 0) return baseIndex + 2;
+    if (strcmp(fieldName, "complexityFactor") == 0) return baseIndex + 1;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -355,10 +338,9 @@ const char *Simple_taskDescriptor::getFieldTypeString(int field) const
     }
     static const char *fieldTypeStrings[] = {
         "int",    // FIELD_taskId
-        "int",    // FIELD_numBytes
         "double",    // FIELD_complexityFactor
     };
-    return (field >= 0 && field < 3) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 2) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **Simple_taskDescriptor::getFieldPropertyNames(int field) const
@@ -442,7 +424,6 @@ std::string Simple_taskDescriptor::getFieldValueAsString(omnetpp::any_ptr object
     Simple_task *pp = omnetpp::fromAnyPtr<Simple_task>(object); (void)pp;
     switch (field) {
         case FIELD_taskId: return long2string(pp->getTaskId());
-        case FIELD_numBytes: return long2string(pp->getNumBytes());
         case FIELD_complexityFactor: return double2string(pp->getComplexityFactor());
         default: return "";
     }
@@ -461,7 +442,6 @@ void Simple_taskDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int f
     Simple_task *pp = omnetpp::fromAnyPtr<Simple_task>(object); (void)pp;
     switch (field) {
         case FIELD_taskId: pp->setTaskId(string2long(value)); break;
-        case FIELD_numBytes: pp->setNumBytes(string2long(value)); break;
         case FIELD_complexityFactor: pp->setComplexityFactor(string2double(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Simple_task'", field);
     }
@@ -478,7 +458,6 @@ omnetpp::cValue Simple_taskDescriptor::getFieldValue(omnetpp::any_ptr object, in
     Simple_task *pp = omnetpp::fromAnyPtr<Simple_task>(object); (void)pp;
     switch (field) {
         case FIELD_taskId: return pp->getTaskId();
-        case FIELD_numBytes: return pp->getNumBytes();
         case FIELD_complexityFactor: return pp->getComplexityFactor();
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'Simple_task' as cValue -- field index out of range?", field);
     }
@@ -497,7 +476,6 @@ void Simple_taskDescriptor::setFieldValue(omnetpp::any_ptr object, int field, in
     Simple_task *pp = omnetpp::fromAnyPtr<Simple_task>(object); (void)pp;
     switch (field) {
         case FIELD_taskId: pp->setTaskId(omnetpp::checked_int_cast<int>(value.intValue())); break;
-        case FIELD_numBytes: pp->setNumBytes(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_complexityFactor: pp->setComplexityFactor(value.doubleValue()); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Simple_task'", field);
     }
@@ -548,11 +526,11 @@ void Simple_taskDescriptor::setFieldStructValuePointer(omnetpp::any_ptr object, 
 
 Register_Class(Simple_result)
 
-Simple_result::Simple_result(const char *name, short kind) : ::omnetpp::cMessage(name, kind)
+Simple_result::Simple_result(const char *name, short kind) : ::omnetpp::cPacket(name, kind)
 {
 }
 
-Simple_result::Simple_result(const Simple_result& other) : ::omnetpp::cMessage(other)
+Simple_result::Simple_result(const Simple_result& other) : ::omnetpp::cPacket(other)
 {
     copy(other);
 }
@@ -564,7 +542,7 @@ Simple_result::~Simple_result()
 Simple_result& Simple_result::operator=(const Simple_result& other)
 {
     if (this == &other) return *this;
-    ::omnetpp::cMessage::operator=(other);
+    ::omnetpp::cPacket::operator=(other);
     copy(other);
     return *this;
 }
@@ -572,21 +550,18 @@ Simple_result& Simple_result::operator=(const Simple_result& other)
 void Simple_result::copy(const Simple_result& other)
 {
     this->resultId = other.resultId;
-    this->numBytes = other.numBytes;
 }
 
 void Simple_result::parsimPack(omnetpp::cCommBuffer *b) const
 {
-    ::omnetpp::cMessage::parsimPack(b);
+    ::omnetpp::cPacket::parsimPack(b);
     doParsimPacking(b,this->resultId);
-    doParsimPacking(b,this->numBytes);
 }
 
 void Simple_result::parsimUnpack(omnetpp::cCommBuffer *b)
 {
-    ::omnetpp::cMessage::parsimUnpack(b);
+    ::omnetpp::cPacket::parsimUnpack(b);
     doParsimUnpacking(b,this->resultId);
-    doParsimUnpacking(b,this->numBytes);
 }
 
 int Simple_result::getResultId() const
@@ -599,23 +574,12 @@ void Simple_result::setResultId(int resultId)
     this->resultId = resultId;
 }
 
-int Simple_result::getNumBytes() const
-{
-    return this->numBytes;
-}
-
-void Simple_result::setNumBytes(int numBytes)
-{
-    this->numBytes = numBytes;
-}
-
 class Simple_resultDescriptor : public omnetpp::cClassDescriptor
 {
   private:
     mutable const char **propertyNames;
     enum FieldConstants {
         FIELD_resultId,
-        FIELD_numBytes,
     };
   public:
     Simple_resultDescriptor();
@@ -647,7 +611,7 @@ class Simple_resultDescriptor : public omnetpp::cClassDescriptor
 
 Register_ClassDescriptor(Simple_resultDescriptor)
 
-Simple_resultDescriptor::Simple_resultDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(Simple_result)), "omnetpp::cMessage")
+Simple_resultDescriptor::Simple_resultDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(Simple_result)), "omnetpp::cPacket")
 {
     propertyNames = nullptr;
 }
@@ -682,7 +646,7 @@ const char *Simple_resultDescriptor::getProperty(const char *propertyName) const
 int Simple_resultDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 2+base->getFieldCount() : 2;
+    return base ? 1+base->getFieldCount() : 1;
 }
 
 unsigned int Simple_resultDescriptor::getFieldTypeFlags(int field) const
@@ -695,9 +659,8 @@ unsigned int Simple_resultDescriptor::getFieldTypeFlags(int field) const
     }
     static unsigned int fieldTypeFlags[] = {
         FD_ISEDITABLE,    // FIELD_resultId
-        FD_ISEDITABLE,    // FIELD_numBytes
     };
-    return (field >= 0 && field < 2) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 1) ? fieldTypeFlags[field] : 0;
 }
 
 const char *Simple_resultDescriptor::getFieldName(int field) const
@@ -710,9 +673,8 @@ const char *Simple_resultDescriptor::getFieldName(int field) const
     }
     static const char *fieldNames[] = {
         "resultId",
-        "numBytes",
     };
-    return (field >= 0 && field < 2) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 1) ? fieldNames[field] : nullptr;
 }
 
 int Simple_resultDescriptor::findField(const char *fieldName) const
@@ -720,7 +682,6 @@ int Simple_resultDescriptor::findField(const char *fieldName) const
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     int baseIndex = base ? base->getFieldCount() : 0;
     if (strcmp(fieldName, "resultId") == 0) return baseIndex + 0;
-    if (strcmp(fieldName, "numBytes") == 0) return baseIndex + 1;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -734,9 +695,8 @@ const char *Simple_resultDescriptor::getFieldTypeString(int field) const
     }
     static const char *fieldTypeStrings[] = {
         "int",    // FIELD_resultId
-        "int",    // FIELD_numBytes
     };
-    return (field >= 0 && field < 2) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 1) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **Simple_resultDescriptor::getFieldPropertyNames(int field) const
@@ -820,7 +780,6 @@ std::string Simple_resultDescriptor::getFieldValueAsString(omnetpp::any_ptr obje
     Simple_result *pp = omnetpp::fromAnyPtr<Simple_result>(object); (void)pp;
     switch (field) {
         case FIELD_resultId: return long2string(pp->getResultId());
-        case FIELD_numBytes: return long2string(pp->getNumBytes());
         default: return "";
     }
 }
@@ -838,7 +797,6 @@ void Simple_resultDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int
     Simple_result *pp = omnetpp::fromAnyPtr<Simple_result>(object); (void)pp;
     switch (field) {
         case FIELD_resultId: pp->setResultId(string2long(value)); break;
-        case FIELD_numBytes: pp->setNumBytes(string2long(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Simple_result'", field);
     }
 }
@@ -854,7 +812,6 @@ omnetpp::cValue Simple_resultDescriptor::getFieldValue(omnetpp::any_ptr object, 
     Simple_result *pp = omnetpp::fromAnyPtr<Simple_result>(object); (void)pp;
     switch (field) {
         case FIELD_resultId: return pp->getResultId();
-        case FIELD_numBytes: return pp->getNumBytes();
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'Simple_result' as cValue -- field index out of range?", field);
     }
 }
@@ -872,7 +829,6 @@ void Simple_resultDescriptor::setFieldValue(omnetpp::any_ptr object, int field, 
     Simple_result *pp = omnetpp::fromAnyPtr<Simple_result>(object); (void)pp;
     switch (field) {
         case FIELD_resultId: pp->setResultId(omnetpp::checked_int_cast<int>(value.intValue())); break;
-        case FIELD_numBytes: pp->setNumBytes(omnetpp::checked_int_cast<int>(value.intValue())); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Simple_result'", field);
     }
 }

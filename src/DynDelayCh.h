@@ -23,7 +23,7 @@
 
 namespace omnetpp{
 
-class DynDelayCh : public cDelayChannel{
+class DynDelayCh : public cDatarateChannel{
 public:
     virtual Result processMessage(cMessage *msg, const SendOptions& options, simtime_t t) override;
 };

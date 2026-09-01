@@ -25,8 +25,9 @@ cChannel::Result DynDelayCh::processMessage(cMessage *msg,
 
     Result result;
 
-    result = cDelayChannel::processMessage(msg, options, t);
+    result = cDatarateChannel::processMessage(msg, options, t);
 
+    // See result API. This only applies to delay.
     result.delay = par("DynDelay").doubleValue();
 
     return result;

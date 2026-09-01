@@ -22,7 +22,7 @@ simple SimpleServer
 	    output out;
 }
 
-channel DynDelayCh extends ned.DelayChannel
+channel DynDelayCh extends ned.DatarateChannel
 {
 	parameters:
 	    // Extended modules use the C++ of the base by default
@@ -30,6 +30,9 @@ channel DynDelayCh extends ned.DelayChannel
 	    // use this instead
 	    @class(DynDelayCh);
 	    volatile double DynDelay @unit(s) = default(100ms);
+	
+	    datarate = 1Mbps;
+	    delay = 10ms;
 }
 
 network SimpleNet

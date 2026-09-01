@@ -24,24 +24,32 @@ void SimpleUser::initialize(){
     EV << "User is alive!";
     offDelaySig = registerSignal("OffDelay");
     timerEvent = new cMessage("TimerEvent");
+    iGate = gate("out");
     scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent);
 }
 
 void SimpleUser::handleMessage(cMessage *msg){
     if(msg == timerEvent){
-        EV << "Timer expired, sending message\n";
+        // Check if is channel is available, else wait
+        if(iGate->getChannel()->isBusy()){
+            EV << "Channel is busy. Sender has to wait" << endl;
+            scheduleAt(iGate->getChannel()->getTransmissionFinishTime(), timerEvent);
+        }
+        else{
+            EV << "Timer expired and channel empty, sending message\n";
 
-        char taskName[20];
-        snprintf(taskName, sizeof(taskName), "task-%d", countMsg);
-        Simple_task *task = new Simple_task(taskName);
-        task->setTaskId(countMsg++);
-        task->setNumBytes(uniform(MIN_TASK_S, MAX_TASK_S));
-        task->setComplexityFactor(normal(1, 0.2));
-        task->setTimestamp();
+            char taskName[20];
+            snprintf(taskName, sizeof(taskName), "task-%d", countMsg);
+            Simple_task *task = new Simple_task(taskName);
+            task->setTaskId(countMsg++);
+            task->setByteLength(uniform(MIN_TASK_S, MAX_TASK_S));
+            task->setComplexityFactor(normal(1, 0.2));
+            task->setTimestamp();
 
-        task_buffer.add(new Simple_task(*task)); // Store a copy. Beware of OMNET++ ownership
-        send(task, "out");
-        scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent);
+            task_buffer.add(new Simple_task(*task)); // Store a copy. Beware of OMNET++ ownership
+            send(task, "out");
+            scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent);
+        }
     }
     else if(strstr(msg->getName(), "result") != nullptr){
         char bubbleMessage[100];

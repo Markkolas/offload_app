@@ -24,19 +24,17 @@ class Simple_result;
  * //
  * // TODO generated message class
  * //
- * message Simple_task
+ * packet Simple_task
  * {
  *     int taskId;
- *     int numBytes;
  *     double complexityFactor;
  * }
  * </pre>
  */
-class Simple_task : public ::omnetpp::cMessage
+class Simple_task : public ::omnetpp::cPacket
 {
   protected:
     int taskId = 0;
-    int numBytes = 0;
     double complexityFactor = 0;
 
   private:
@@ -57,9 +55,6 @@ class Simple_task : public ::omnetpp::cMessage
     virtual int getTaskId() const;
     virtual void setTaskId(int taskId);
 
-    virtual int getNumBytes() const;
-    virtual void setNumBytes(int numBytes);
-
     virtual double getComplexityFactor() const;
     virtual void setComplexityFactor(double complexityFactor);
 };
@@ -68,20 +63,18 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const Simple_task& obj) {ob
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, Simple_task& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simple.msg:25</tt> by opp_msgtool.
+ * Class generated from <tt>simple.msg:24</tt> by opp_msgtool.
  * <pre>
- * message Simple_result
+ * packet Simple_result
  * {
  *     int resultId;
- *     int numBytes;
  * }
  * </pre>
  */
-class Simple_result : public ::omnetpp::cMessage
+class Simple_result : public ::omnetpp::cPacket
 {
   protected:
     int resultId = 0;
-    int numBytes = 0;
 
   private:
     void copy(const Simple_result& other);
@@ -100,9 +93,6 @@ class Simple_result : public ::omnetpp::cMessage
 
     virtual int getResultId() const;
     virtual void setResultId(int resultId);
-
-    virtual int getNumBytes() const;
-    virtual void setNumBytes(int numBytes);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const Simple_result& obj) {obj.parsimPack(b);}

@@ -25,6 +25,7 @@ private:
     const int MIN_TASK_S = 100;
     const int MAX_TASK_S = 10000;
     omnetpp::cArray task_buffer{"tx_buff"};
+    omnetpp::cGate *iGate;
 
     int countMsg = 0;
 

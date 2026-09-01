@@ -16,13 +16,11 @@
 //
 // TODO generated message class
 //
-message Simple_task {
+packet Simple_task {
     int taskId;
-    int numBytes;
     double complexityFactor;
 }
 
-message Simple_result {
+packet Simple_result {
 	int resultId;
-	int numBytes;
 }

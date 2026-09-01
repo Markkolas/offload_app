@@ -40,6 +40,7 @@ void SimpleServer::handleMessage(cMessage *msg){
             EV << "Queue is full!" << endl;
             fullq_events++;
             emit(qFullEvent, fullq_events);
+            delete(task);
         }
         else if (procEvent == nullptr){ // Queue was empty, start first q timer
             procEvent = new cMessage("ProcTimer");
@@ -48,7 +49,7 @@ void SimpleServer::handleMessage(cMessage *msg){
         }
     }
     else if(msg == procEvent){
-        Simple_task * task = (Simple_task *)queue_buff.pop();
+        Simple_task *task = (Simple_task *)queue_buff.pop();
 
         sendResult(task);
         delete(task);
@@ -68,11 +69,11 @@ void SimpleServer::handleMessage(cMessage *msg){
 }
 
 simtime_t SimpleServer::processTask(Simple_task *task){
-    EV << "Number of bytes: " << task->getNumBytes() << "\nComplexity factor: " << task->getComplexityFactor();
+    EV << "Number of bytes: " << task->getByteLength() << "\nComplexity factor: " << task->getComplexityFactor();
     EV << "\nStarting offload process\n";
 
     // I need to be carefull with data types in operations
-    double ideal_delay = (double)(task->getNumBytes())/(double)(CPU_CYCLES);
+    double ideal_delay = (double)(task->getByteLength())/(double)(CPU_CYCLES);
     simtime_t pDelay = simtime_t((ideal_delay*task->getComplexityFactor())/(1e3)); // milliseconds
 
     EV << "Processing will be completed after " << pDelay << " ms\n";
@@ -97,7 +98,7 @@ void SimpleServer::sendResult(Simple_task *task) {
 
     Simple_result *result = new Simple_result(resultName);
     result->setResultId(task->getTaskId());
-    result->setNumBytes(uniform(1, 100));
+    result->setByteLength(uniform(1, 100));
     result->setTimestamp(getSimulation()->getSimTime());
 
     send(result, "out");

@@ -43,13 +43,14 @@ void SimpleUser::handleMessage(cMessage *msg){
             Simple_task *task = new Simple_task(taskName);
             task->setTaskId(countMsg++);
             task->setByteLength(uniform(MIN_TASK_S, MAX_TASK_S));
-            task->setComplexityFactor(normal(1, 0.2));
+            task->setComplexityFactor(truncnormal(1, 0.2));
             task->setTimestamp();
 
             task_buffer.add(new Simple_task(*task)); // Store a copy. Beware of OMNET++ ownership
 
             strcat(taskName, "-L2");
             L2multi *L2packet = new L2multi(taskName);
+            L2packet->setSource(getIndex());
             L2packet->encapsulate(task);
             send(L2packet, "out");
             scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent);

@@ -31,12 +31,10 @@ private:
 
     struct Core{
         omnetpp::cMessage *procEvent = nullptr; // May be a good idea to use smart pointers for this
-        Simple_task *task = nullptr;
+        L2multi *packet = nullptr;
     }core[MAX_CORES];
 
     int fullq_events = 0;
-
-    omnetpp::cGate *oGate;
 
     omnetpp::cQueue queue_buff{"server queue"};
 
@@ -45,10 +43,10 @@ private:
 protected:
     virtual void initialize() override;
     virtual void handleMessage(omnetpp::cMessage *msg) override;
-    Simple_task * findAvailableTask(int core);
+    L2multi * findAvailablePacket(int core);
     omnetpp::simtime_t processTask(Simple_task *);
-    bool saveTask(Simple_task *);
-    void sendResult(Simple_task *);
+    bool savePacket(L2multi *);
+    void sendResult(Simple_task *, int);
 
 public:
     ~SimpleServer();

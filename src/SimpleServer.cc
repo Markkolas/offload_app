@@ -24,7 +24,6 @@ void SimpleServer::initialize(){
     EV << "Server is alive!";
     qLengthSig = registerSignal("QueueLength");
     qFullEvent = registerSignal("QueueFull");
-    oGate = gate("out");
 
     CPU_CYCLES = par("CPU_CYCLES").intValue();
     N_CORES = par("N_CORES").intValue();
@@ -45,51 +44,52 @@ void SimpleServer::handleMessage(cMessage *msg){
     }
     else if(dynamic_cast<L2multi *>(msg) != nullptr){
         L2multi *L2packet = (L2multi *)msg; //TODO: Refractor this with smart pointers
-        Simple_task *task = check_and_cast<Simple_task *>(L2packet->decapsulate());
 
-        EV << "Task " << task->getName() << " received. Saving in task queue.\n";
+        EV << "Packet " << L2packet->getName() << " received. Saving in task queue.\n";
 
-        bool q_full = saveTask(task);
+        bool q_full = savePacket(L2packet);
 
         if(q_full){
             EV << "Queue is full!" << endl;
             fullq_events++;
             emit(qFullEvent, fullq_events);
-            delete(task);
+            delete(L2packet);
         }
         else{ // Check if there are any idle cores. Note how cores always search for more tasks before idling
             for(int i = 0; i < N_CORES; i++){
-                if(core[i].task == nullptr){
-                    core[i].task = task;
-                    simtime_t pDelay = processTask(core[i].task);
+                if(core[i].packet == nullptr){
+                    core[i].packet = L2packet;
+                    simtime_t pDelay = processTask(check_and_cast<Simple_task *>(core[i].packet->getEncapsulatedPacket()));
                     scheduleAfter(pDelay, core[i].procEvent);
                     break; //Important
                 }
             }
         }
-
-        delete(L2packet);
     }
     else if(strcmp("ProcTimer", msg->getName()) == 0){
         int n_core = msg->getKind();
+        int dest = core[n_core].packet->getSource();
         // Check if is channel is available, else wait
-        if(oGate->getChannel()->isBusy()){
+        if(gate("out", dest)->getChannel()->isBusy()){
             EV << "Channel is busy. Sender has to wait" << endl;
-            scheduleAt(oGate->getChannel()->getTransmissionFinishTime(), msg);
+            scheduleAt(gate("out", dest)->getChannel()->getTransmissionFinishTime(), msg);
         }
         else{
             EV << "Timer expired and channel empty, CORE[" << n_core << "] sending a result" << endl;
 
-            if(queue_buff.remove(core[n_core].task) == nullptr)
+            if(queue_buff.remove(core[n_core].packet) == nullptr)
                 throw cRuntimeError("Uh oh, a core tried to delete a nonexisting task");
 
-            sendResult(core[n_core].task);
-            delete(core[n_core].task);
+            Simple_task *task = check_and_cast<Simple_task *>(core[n_core].packet->decapsulate());
 
-            core[n_core].task = findAvailableTask(n_core);
+            sendResult(task, dest);
+            delete(task);
+            delete(core[n_core].packet);
 
-            if(core[n_core].task != nullptr){
-                simtime_t pDelay = processTask(core[n_core].task);
+            core[n_core].packet = findAvailablePacket(n_core);
+
+            if(core[n_core].packet != nullptr){
+                simtime_t pDelay = processTask(check_and_cast<Simple_task *>(core[n_core].packet->getEncapsulatedPacket()));
                 scheduleAfter(pDelay, msg);
             }
         }
@@ -108,22 +108,26 @@ simtime_t SimpleServer::processTask(Simple_task *task){
     simtime_t pDelay = simtime_t((ideal_delay*task->getComplexityFactor())/(1e3)); // milliseconds
 
     EV << "Processing will be completed after " << pDelay << " ms\n";
+    if(pDelay < 0){
+        // Debug trap
+        EV << "Debug trap" << endl;
+    }
     return pDelay;
 }
 
-bool SimpleServer::saveTask(Simple_task *task){
+bool SimpleServer::savePacket(L2multi *packet){
     bool is_full = true;
     emit(qLengthSig, queue_buff.getLength());
 
     if(queue_buff.getLength() < QUEUE_SIZE){
-        queue_buff.insert(task);
+        queue_buff.insert(packet);
         is_full = false;
     }
 
     return is_full;
 }
 
-void SimpleServer::sendResult(Simple_task *task) {
+void SimpleServer::sendResult(Simple_task *task, int dest) {
     char resultName[20];
     snprintf(resultName, sizeof(resultName), "result-%d", task->getTaskId());
 
@@ -135,17 +139,17 @@ void SimpleServer::sendResult(Simple_task *task) {
     strcat(resultName, "-L2");
     L2multi *L2packet = new L2multi(resultName);
     L2packet->encapsulate(result);
-    send(L2packet, "out");
+    send(L2packet, "out", dest);
 }
 
-Simple_task * SimpleServer::findAvailableTask(int n_core){
+L2multi * SimpleServer::findAvailablePacket(int n_core){
     for(cQueue::Iterator iter(queue_buff); !iter.end(); iter++){
-        Simple_task *task = (Simple_task*) *iter;
+        L2multi *packet = (L2multi*) *iter;
         bool is_executing = false;
 
         for(int i = 0; i<N_CORES; i++){
             if(i != n_core){
-                if(task == core[i].task){
+                if(packet == core[i].packet){
                     is_executing = true;
                     break; // Pass to the next task
                 }
@@ -153,7 +157,7 @@ Simple_task * SimpleServer::findAvailableTask(int n_core){
         }
 
         if(!is_executing){
-            return task;
+            return packet;
         }
     }
 

@@ -3,9 +3,11 @@
     <inputs>
         <input pattern="simulations/results/InitSimpleConf-*.vec"/>
         <input pattern="simulations/results/InitSimpleConf-*.sca"/>
+        <input pattern="simulations/results/MultiSimpleConf-*.vec"/>
+        <input pattern="simulations/results/MultiSimpleConf-*.sca"/>
     </inputs>
     <charts>
-        <chart createdWith="OMNeT++ 6.3.0.251110-bb3d6a4731" icon="icons/full/obj/linechart.png" id="2133007031" name="QueueLength example" resultTypes="vector" template="linechart_native" type="LINE">
+        <chart createdWith="OMNeT++ 6.3.0.251110-bb3d6a4731" icon="icons/full/obj/linechart.png" id="111986909" name="QueueLength example" resultTypes="vector" template="linechart_native" type="LINE">
             <script><![CDATA[import math
 from omnetpp.scave import results, chart, utils
 
@@ -746,7 +748,7 @@ utils.export_data_if_needed(df, props)
             <property name="Plot.Antialias" value="true"/>
             <property name="include_fields" value="false"/>
         </chart>
-        <chart createdWith="OMNeT++ 6.3.0.251110-bb3d6a4731" icon="icons/full/obj/linechart.png" id="814574517" name="OffDelay example" resultTypes="vector" template="linechart_native" type="LINE">
+        <chart createdWith="OMNeT++ 6.3.0.251110-bb3d6a4731" icon="icons/full/obj/linechart.png" id="623303666" name="OffDelay example" resultTypes="vector" template="linechart_native" type="LINE">
             <script><![CDATA[import math
 from omnetpp.scave import results, chart, utils
 

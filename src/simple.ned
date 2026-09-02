@@ -18,12 +18,13 @@ simple SimpleServer
 	    @statistic[QueueLengthStat](title="Qeueue length"; source=QueueLength; record=vector,mean);
 	    @statistic[QueueFullStat](title="Queue full events"; source=QueueFull; record=vector,count);
 	
-	    int CPU_CYCLES = default(100);
+	    int CPU_CYCLES = default(300);
 	    int N_CORES = default(1);
 	    int QUEUE_SIZE = default(100);
+	    int MAX_CLIENTS = default(32);
 	gates:
-	    input in;
-	    output out;
+	    input in[];
+	    output out[];
 }
 
 channel DynDelayCh extends ned.DatarateChannel
@@ -41,11 +42,16 @@ channel DynDelayCh extends ned.DatarateChannel
 
 network SimpleNet
 {
+    parameters:
+        int N_USERS = default(1);
 	submodules:
-	    user: SimpleUser;
+	    user[N_USERS]: SimpleUser;
 	    server: SimpleServer;
 	
 	connections:
-	    user.out --> DynDelayCh --> server.in;
-	    user.in <-- DynDelayCh <-- server.out;
+	    for i=0..N_USERS-1{
+	    	user[i].out --> DynDelayCh --> server.in++;
+	  		user[i].in <-- DynDelayCh <-- server.out++;
+	    }
+
 }

@@ -17,6 +17,31 @@
 #define SIMPLEUSER_H_
 
 #include <omnetpp.h>
+#include <memory>
+
+/**
+ * REGARDING SMART POINTERS IN OMNET++:
+ *
+ *  OMNET++ provides its own native memory management system. Part of this system is
+ *  a hierarchical ownership mechanism that operates in the deletion of object. Each
+ *  object that extends from cOwnedObject has a pointer which point to the object that
+ *  owns it.
+ *
+ *  WELL BEHAVED OWNED OBJECTS ASKS THEIR OWNERS FOR PERMISION TO BE DELETED.
+ *
+ *  WELL BEHAVED OWNER OBJECTS DELETE ALL THEIR OWNED OBJECTS IN ITS DESTRUCTOR (sometimes they release
+ *  them all before destroying themselves).
+ *
+ *  When a delete() is called upon an owned object, the object, inside its destructor,
+ *  asks for permission to be destroyed to its owner. If the owner refuses, it typically
+ *  ends with an exception throw.
+ *
+ *  This is mechanism is the main reason why smart pointers and standard C++ memory management
+ *  are not typically used. Nevertheless smart pointers can be useful.
+ *
+ *  Care that when a raw pointer is obtained from the unique pointer and passed to a function,
+ *  that function DOES not delete the pointer.
+ */
 
 #include "simple_m.h"
 #include "L2multi_m.h"
@@ -30,7 +55,7 @@ private:
 
     int countMsg = 0;
 
-    omnetpp::cMessage *timerEvent = nullptr;
+    std::shared_ptr<omnetpp::cMessage> timerEvent = nullptr;
 
     Simple_task * getTaskFromId(int Id);
 

@@ -34,7 +34,7 @@ void SimpleServer::initialize(){
 
     // Create message timers
     for(int i = 0; i < N_CORES; i++){
-        core[i].procEvent = new cMessage("ProcTimer", i);
+        core[i].procEvent = std::make_shared<cMessage>("ProcTimer", i);
     }
 }
 
@@ -43,7 +43,7 @@ void SimpleServer::handleMessage(cMessage *msg){
         EV << "Message " << msg->getName() << " from client received! Deleting it \n";
     }
     else if(dynamic_cast<L2multi *>(msg) != nullptr){
-        L2multi *L2packet = (L2multi *)msg; //TODO: Refractor this with smart pointers
+        L2multi *L2packet = (L2multi *)msg;
 
         EV << "Packet " << L2packet->getName() << " received. Saving in task queue.\n";
 
@@ -58,9 +58,9 @@ void SimpleServer::handleMessage(cMessage *msg){
         else{ // Check if there are any idle cores. Note how cores always search for more tasks before idling
             for(int i = 0; i < N_CORES; i++){
                 if(core[i].packet == nullptr){
-                    core[i].packet = L2packet;
+                    core[i].packet.reset(L2packet); //Forced to do bad practice, OMNET++ does not combine well with shared pointers
                     simtime_t pDelay = processTask(check_and_cast<Simple_task *>(core[i].packet->getEncapsulatedPacket()));
-                    scheduleAfter(pDelay, core[i].procEvent);
+                    scheduleAfter(pDelay, core[i].procEvent.get());
                     break; //Important
                 }
             }
@@ -77,16 +77,14 @@ void SimpleServer::handleMessage(cMessage *msg){
         else{
             EV << "Timer expired and channel empty, CORE[" << n_core << "] sending a result" << endl;
 
-            if(queue_buff.remove(core[n_core].packet) == nullptr)
+            if(queue_buff.remove(core[n_core].packet.get()) == nullptr)
                 throw cRuntimeError("Uh oh, a core tried to delete a nonexisting task");
 
-            Simple_task *task = check_and_cast<Simple_task *>(core[n_core].packet->decapsulate());
+            Simple_task *task = check_and_cast<Simple_task *>(core[n_core].packet.get()->decapsulate());
 
             sendResult(task, dest);
             delete(task);
-            delete(core[n_core].packet);
-
-            core[n_core].packet = findAvailablePacket(n_core);
+            core[n_core].packet.reset(findAvailablePacket(n_core));
 
             if(core[n_core].packet != nullptr){
                 simtime_t pDelay = processTask(check_and_cast<Simple_task *>(core[n_core].packet->getEncapsulatedPacket()));
@@ -149,7 +147,7 @@ L2multi * SimpleServer::findAvailablePacket(int n_core){
 
         for(int i = 0; i<N_CORES; i++){
             if(i != n_core){
-                if(packet == core[i].packet){
+                if(packet == core[i].packet.get()){
                     is_executing = true;
                     break; // Pass to the next task
                 }
@@ -165,6 +163,11 @@ L2multi * SimpleServer::findAvailablePacket(int n_core){
 }
 
 SimpleServer::~SimpleServer(){
-    for(int i=0; i<N_CORES; i++)
-        cancelAndDelete(core[i].procEvent);
+    for(int i=0; i<N_CORES; i++){
+        cancelEvent(core[i].procEvent.get());
+        core[i].procEvent = nullptr;
+
+        queue_buff.remove(core[i].packet.get()); // Again, OMNET++ do not work well with smart pointers. Or its not trivial at least
+        core[i].packet = nullptr;
+    }
 }

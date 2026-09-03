@@ -23,17 +23,17 @@ Define_Module(SimpleUser);
 void SimpleUser::initialize(){
     EV << "User is alive!";
     offDelaySig = registerSignal("OffDelay");
-    timerEvent = new cMessage("TimerEvent");
+    timerEvent = std::make_shared<cMessage>("TimerEvent");
     oGate = gate("out");
-    scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent);
+    scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent.get());
 }
 
 void SimpleUser::handleMessage(cMessage *msg){
-    if(msg == timerEvent){
+    if(msg == timerEvent.get()){
         // Check if is channel is available, else wait
         if(oGate->getChannel()->isBusy()){
             EV << "Channel is busy. Sender has to wait" << endl;
-            scheduleAt(oGate->getChannel()->getTransmissionFinishTime(), timerEvent);
+            scheduleAt(oGate->getChannel()->getTransmissionFinishTime(), timerEvent.get());
         }
         else{
             EV << "Timer expired and channel empty, sending task\n";
@@ -53,12 +53,12 @@ void SimpleUser::handleMessage(cMessage *msg){
             L2packet->setSource(getIndex());
             L2packet->encapsulate(task);
             send(L2packet, "out");
-            scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent);
+            scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent.get());
         }
     }
     else if(dynamic_cast<L2multi *>(msg) != nullptr){
         char bubbleMessage[100];
-        L2multi *L2packet = (L2multi *)msg; //TODO: Refractor this with smart pointers
+        L2multi *L2packet = (L2multi *)msg;
         Simple_result *result = check_and_cast<Simple_result *>(L2packet->decapsulate());
 
         snprintf(bubbleMessage, sizeof(bubbleMessage), "%s arrived!", result->getName());
@@ -106,5 +106,6 @@ Simple_task * SimpleUser::getTaskFromId(int Id){
 }
 
 SimpleUser::~SimpleUser(){
-    cancelAndDelete(timerEvent);
+    cancelEvent(timerEvent.get());
+    timerEvent = nullptr; // Smart pointer working in a very unamazing way
 }

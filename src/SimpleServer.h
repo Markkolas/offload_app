@@ -17,6 +17,30 @@
 #define SIMPLESERVER_H_
 
 #include <omnetpp.h>
+#include <memory>
+
+/**
+ * REGARDING SMART POINTERS IN OMNET++:
+ *
+ *  OMNET++ provides its own native memory management system. Part of this system is
+ *  a hierarchical ownership mechanism that operates in the deletion of object. Each
+ *  object that extends from cOwnedObject has a pointer which point to the object that
+ *  owns it.
+ *
+ *  WELL BEHAVED OWNED OBJECTS ASKS THEIR OWNERS FOR PERMISION TO BE DELETED.
+ *
+ *  WELL BEHAVED OWNER OBJECTS DELETE ALL THEIR OWNED OBJECTS IN ITS DESTRUCTOR.
+ *
+ *  When a delete() is called upon an owned object, the object, inside its destructor,
+ *  asks for permission to be destroyed to its owner. If the owner refuses, it typically
+ *  ends with an exception throw.
+ *
+ *  This is mechanism is the main reason why smart pointers and standard C++ memory management
+ *  are not typically used. Nevertheless smart pointers can be useful.
+ *
+ *  Care that when a raw pointer is obtained from the unique pointer and passed to a function,
+ *  that function DOES not delete the pointer.
+ */
 
 #include "simple_m.h"
 #include "L2multi_m.h"
@@ -30,8 +54,8 @@ private:
     int QUEUE_SIZE;
 
     struct Core{
-        omnetpp::cMessage *procEvent = nullptr; // May be a good idea to use smart pointers for this
-        L2multi *packet = nullptr;
+        std::shared_ptr<omnetpp::cMessage> procEvent = nullptr;
+        std::shared_ptr<L2multi> packet = nullptr;
     }core[MAX_CORES];
 
     int fullq_events = 0;

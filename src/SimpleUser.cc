@@ -38,21 +38,7 @@ void SimpleUser::handleMessage(cMessage *msg){
         else{
             EV << "Timer expired and channel empty, sending task\n";
 
-            char taskName[20];
-            snprintf(taskName, sizeof(taskName), "task-%d", countMsg);
-            Simple_task *task = new Simple_task(taskName);
-            task->setTaskId(countMsg++);
-            task->setByteLength(uniform(MIN_TASK_S, MAX_TASK_S));
-            task->setComplexityFactor(truncnormal(1, 0.2));
-            task->setTimestamp();
-
-            task_buffer.add(new Simple_task(*task)); // Store a copy. Beware of OMNET++ ownership
-
-            strcat(taskName, "-L2");
-            L2multi *L2packet = new L2multi(taskName);
-            L2packet->setSource(getIndex());
-            L2packet->encapsulate(task);
-            send(L2packet, "out");
+            sendTask();
             scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent.get());
         }
     }
@@ -64,19 +50,10 @@ void SimpleUser::handleMessage(cMessage *msg){
         snprintf(bubbleMessage, sizeof(bubbleMessage), "%s arrived!", result->getName());
         bubble(bubbleMessage);
 
-        EV << result->getName() << " received. Finding offloading delay\n";
-
-        Simple_task *ret_task = getTaskFromId(result->getResultId());
-
-        simtime_t off_delay = result->getTimestamp() - ret_task->getTimestamp();
-
-        EV << "--- Offloading delay: " << off_delay << " ms ---\n";
-
-        emit(offDelaySig, off_delay.dbl());
+        processResult(result);
 
         delete L2packet;
         delete result;
-        delete ret_task;
     }
     else{
         throw cRuntimeError("Ups, that should not happen. Message with name %s arrived", msg->getName());
@@ -103,6 +80,38 @@ Simple_task * SimpleUser::getTaskFromId(int Id){
         throw cRuntimeError("Something went wrong when searching task with task ID: %d", Id);
     }
 
+}
+
+void SimpleUser::sendTask(){
+    char taskName[20];
+    snprintf(taskName, sizeof(taskName), "task-%d", countMsg);
+    Simple_task *task = new Simple_task(taskName);
+    task->setTaskId(countMsg++);
+    task->setByteLength(uniform(MIN_TASK_S, MAX_TASK_S));
+    task->setComplexityFactor(truncnormal(1, 0.2));
+    task->setTimestamp();
+
+    task_buffer.add(new Simple_task(*task)); // Store a copy. Beware of OMNET++ ownership
+
+    strcat(taskName, "-L2");
+    L2multi *L2packet = new L2multi(taskName);
+    L2packet->setSource(getIndex());
+    L2packet->encapsulate(task);
+    send(L2packet, "out");
+}
+
+void SimpleUser::processResult(Simple_result *result){
+    EV << result->getName() << " received. Finding offloading delay\n";
+
+    Simple_task *ret_task = getTaskFromId(result->getResultId());
+
+    simtime_t off_delay = result->getTimestamp() - ret_task->getTimestamp();
+
+    EV << "--- Offloading delay: " << off_delay << " ms ---\n";
+
+    emit(offDelaySig, off_delay.dbl());
+
+    delete(ret_task);
 }
 
 SimpleUser::~SimpleUser(){

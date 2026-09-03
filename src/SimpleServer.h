@@ -67,7 +67,7 @@ private:
 protected:
     virtual void initialize() override;
     virtual void handleMessage(omnetpp::cMessage *msg) override;
-    L2multi * findAvailablePacket(int core);
+    L2multi * findAvailablePacket(int core=-1);
     omnetpp::simtime_t processTask(Simple_task *);
     bool savePacket(L2multi *);
     void sendResult(Simple_task *, int);

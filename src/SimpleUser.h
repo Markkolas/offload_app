@@ -63,6 +63,8 @@ private:
 protected:
     virtual void initialize() override;
     virtual void handleMessage(omnetpp::cMessage *msg) override;
+    virtual void sendTask();
+    virtual void processResult(Simple_result *);
 
 public:
     ~SimpleUser();

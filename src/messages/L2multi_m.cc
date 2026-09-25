@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.3 from L2multi.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.3 from messages/L2multi.msg.
 //
 
 // Disable warnings about unused variables, empty switch stmts, etc:

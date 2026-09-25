@@ -13,8 +13,8 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-#ifndef SIMPLEUSER_H_
-#define SIMPLEUSER_H_
+#ifndef SIMPLESERVER_H_
+#define SIMPLESERVER_H_
 
 #include <omnetpp.h>
 #include <memory>
@@ -29,8 +29,7 @@
  *
  *  WELL BEHAVED OWNED OBJECTS ASKS THEIR OWNERS FOR PERMISION TO BE DELETED.
  *
- *  WELL BEHAVED OWNER OBJECTS DELETE ALL THEIR OWNED OBJECTS IN ITS DESTRUCTOR (sometimes they release
- *  them all before destroying themselves).
+ *  WELL BEHAVED OWNER OBJECTS DELETE ALL THEIR OWNED OBJECTS IN ITS DESTRUCTOR.
  *
  *  When a delete() is called upon an owned object, the object, inside its destructor,
  *  asks for permission to be destroyed to its owner. If the owner refuses, it typically
@@ -43,31 +42,38 @@
  *  that function DOES not delete the pointer.
  */
 
-#include "simple_m.h"
-#include "L2multi_m.h"
+#include "messages/simple_m.h"
+#include "messages/L2multi_m.h"
 
-class SimpleUser : public omnetpp::cSimpleModule  {
+#define MAX_CORES 128 //Dont want to use vectors
+
+class SimpleServer : public omnetpp::cSimpleModule {
 private:
-    const int MIN_TASK_S = 100;
-    const int MAX_TASK_S = 10000;
-    omnetpp::cArray task_buffer{"tx_buff"};
-    omnetpp::cGate *oGate;
+    int CPU_CYCLES;
+    int N_CORES;
+    int QUEUE_SIZE;
 
-    int countMsg = 0;
+    struct Core{
+        std::shared_ptr<omnetpp::cMessage> procEvent = nullptr;
+        std::shared_ptr<L2multi> packet = nullptr;
+    }core[MAX_CORES];
 
-    std::shared_ptr<omnetpp::cMessage> timerEvent = nullptr;
+    int fullq_events = 0;
 
-    Simple_task * getTaskFromId(int Id);
+    omnetpp::cQueue queue_buff{"server queue"};
 
-    omnetpp::simsignal_t offDelaySig;
+    omnetpp::simsignal_t qLengthSig, qFullEvent;
+
 protected:
     virtual void initialize() override;
     virtual void handleMessage(omnetpp::cMessage *msg) override;
-    virtual void sendTask();
-    virtual void processResult(Simple_result *);
+    L2multi * findAvailablePacket(int core=-1);
+    omnetpp::simtime_t processTask(Simple_task *);
+    bool savePacket(L2multi *);
+    void sendResult(Simple_task *, int);
 
 public:
-    ~SimpleUser();
+    ~SimpleServer();
 };
 
-#endif /* SIMPLEUSER_H_ */
+#endif /* SIMPLESERVER_H_ */

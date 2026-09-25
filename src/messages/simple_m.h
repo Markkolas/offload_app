@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.3 from simple.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.3 from messages/simple.msg.
 //
 
 #ifndef __SIMPLE_M_H
@@ -19,7 +19,7 @@
 class Simple_task;
 class Simple_result;
 /**
- * Class generated from <tt>simple.msg:19</tt> by opp_msgtool.
+ * Class generated from <tt>messages/simple.msg:19</tt> by opp_msgtool.
  * <pre>
  * //
  * // TODO generated message class
@@ -63,7 +63,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const Simple_task& obj) {ob
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, Simple_task& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simple.msg:24</tt> by opp_msgtool.
+ * Class generated from <tt>messages/simple.msg:24</tt> by opp_msgtool.
  * <pre>
  * packet Simple_result
  * {

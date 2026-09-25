@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.3 from L2multi.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.3 from messages/L2multi.msg.
 //
 
 #ifndef __L2MULTI_M_H
@@ -18,7 +18,7 @@
 
 class L2multi;
 /**
- * Class generated from <tt>L2multi.msg:19</tt> by opp_msgtool.
+ * Class generated from <tt>messages/L2multi.msg:19</tt> by opp_msgtool.
  * <pre>
  * //
  * // TODO generated message class

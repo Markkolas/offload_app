@@ -87,6 +87,7 @@ void SimpleServer::handleMessage(cMessage *msg){
             core[n_core].packet.reset(findAvailablePacket(n_core));
 
             if(core[n_core].packet != nullptr){
+                EV << "Processing new result" << endl;
                 simtime_t pDelay = processTask(check_and_cast<Simple_task *>(core[n_core].packet->getEncapsulatedPacket()));
                 scheduleAfter(pDelay, msg);
             }
@@ -102,10 +103,10 @@ simtime_t SimpleServer::processTask(Simple_task *task){
     EV << "\nStarting offload process\n";
 
     // I need to be carefull with data types in operations
-    double ideal_delay = (double)(task->getByteLength())/(double)(CPU_CYCLES);
-    simtime_t pDelay = simtime_t((ideal_delay*task->getComplexityFactor())/(1e3)); // milliseconds
+    double ideal_delay = (double)(8*task->getByteLength())/(double)(CPU_CYCLES); //microseconds (MHz)
+    simtime_t pDelay = simtime_t((ideal_delay*task->getComplexityFactor())/(1e6));
 
-    EV << "Processing will be completed after " << pDelay << " ms\n";
+    EV << "Processing will be completed after " << pDelay*1000 << " ms\n";
     if(pDelay < 0){
         // Debug trap
         EV << "Debug trap" << endl;

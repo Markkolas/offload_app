@@ -28,13 +28,15 @@ simple SimpleUser
 	    @statistic[QueueLengthStat](title="Qeueue length"; source=QueueLength; record=vector,mean);
 	    @statistic[QueueFullStat](title="Queue full events"; source=QueueFull; record=vector);
 
-        double tasksPerSecond = default(10);
+        double tasksGenPeriod @unit(s) = default(100ms);
 
 	    int CPU_CYCLES = default(300); //MHz
 	    int QUEUE_SIZE = default(10000); //Tasks
 	
 	    int MIN_TASK_S = default(1000); //Bytes
 	    int MAX_TASK_S = default(10000); //Bytes
+	
+	    volatile double traffic_gen = default(exponential(1));
     gates:
         input in;
         output out;
@@ -52,6 +54,7 @@ simple SimpleServer
 	    int N_CORES = default(1);
 	    int QUEUE_SIZE = default(10000); //Tasks
 	    int MAX_CLIENTS = default(32);
+	
 	gates:
 	    input in[];
 	    output out[];
@@ -64,10 +67,9 @@ channel DynDelayCh extends ned.DatarateChannel
 	    // If a NED module inherits both the NED and C++ class,
 	    // use @class directive instead:
 	    @class(DynDelayCh);
-	    volatile double DynDelay @unit(s) = default(100ms);
+	    volatile double DynDelay @unit(s) = default(0ms);
 	
 	    datarate = default(1Mbps);
-	    delay = default(10ms);
 }
 
 network SimpleNet

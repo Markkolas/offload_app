@@ -43,22 +43,25 @@ void SimpleUser::initialize(){
     else
         NODE_ID = 0;
 
-    scheduleAfter(1/par("tasksPerSecond").doubleValue(), timerEvent.get());
+    scheduleAt(getSimulation()->getSimTime(), timerEvent.get());
 }
 
 void SimpleUser::handleMessage(cMessage *msg){
     if(msg == timerEvent.get()){
-        Simple_task *task = genTask();
+        // How many tasks?
+        for(int i = 0; i < (int)par("traffic_gen").doubleValue(); i++){
+            Simple_task *task = genTask();
 
-        bool q_full = saveTask(task);
+            bool q_full = saveTask(task);
 
-        if(q_full){
-            EV << "Task queue in user is full!" << endl;
-            fullq_events++;
-            emit(qFullEvent, fullq_events);
+            if(q_full){
+                EV << "Task queue in user is full!" << endl;
+                fullq_events++;
+                emit(qFullEvent, fullq_events);
+            }
         }
 
-        scheduleAfter(1/par("tasksPerSecond").doubleValue(), msg);
+        scheduleAfter(par("tasksGenPeriod").doubleValue(), msg);
 
         // If queue has packets and no packet is being send, send first on queue
         if(task_buffer.getLength() > 0 && txCompleteEvent->isScheduled() == false)
@@ -135,14 +138,16 @@ void SimpleUser::processResult(Simple_result *result){
 
     simtime_t off_delay = getSimulation()->getSimTime() - result->getTimestamp();
 
-    EV << "--- Offloading delay: " << off_delay*1000 << " ms";
+    EV << "--- Offloading delay: " << off_delay*1000 << " ms ---";
 
     emit(offDelaySig, off_delay.dbl());
 }
 
 SimpleUser::~SimpleUser(){
     cancelEvent(timerEvent.get());
+    cancelEvent(txCompleteEvent);
     timerEvent = nullptr; // Smart pointer working in a very unamazing way
+    delete txCompleteEvent;
 }
 
 //Simple_task * SimpleUser::getTaskFromId(int Id){

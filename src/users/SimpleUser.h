@@ -53,8 +53,7 @@ private:
 
     int NODE_ID;
 
-    const int MIN_TASK_S = 100;
-    const int MAX_TASK_S = 10000;
+    int MIN_TASK_S, MAX_TASK_S;
     omnetpp::cQueue task_buffer{"task_buff"};
     omnetpp::cGate *oGate;
 

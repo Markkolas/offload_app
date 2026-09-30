@@ -30,8 +30,11 @@ simple SimpleUser
 
         double tasksPerSecond = default(10);
 
-	    int CPU_CYCLES = default(300);
-	    int QUEUE_SIZE = default(10000);
+	    int CPU_CYCLES = default(300); //MHz
+	    int QUEUE_SIZE = default(10000); //Tasks
+	
+	    int MIN_TASK_S = default(1000); //Bytes
+	    int MAX_TASK_S = default(10000); //Bytes
     gates:
         input in;
         output out;
@@ -45,9 +48,9 @@ simple SimpleServer
 	    @statistic[QueueLengthStat](title="Qeueue length"; source=QueueLength; record=vector,mean);
 	    @statistic[QueueFullStat](title="Queue full events"; source=QueueFull; record=vector);
 	
-	    int CPU_CYCLES = default(300);
+	    int CPU_CYCLES = default(300); //MHz
 	    int N_CORES = default(1);
-	    int QUEUE_SIZE = default(10000);
+	    int QUEUE_SIZE = default(10000); //Tasks
 	    int MAX_CLIENTS = default(32);
 	gates:
 	    input in[];

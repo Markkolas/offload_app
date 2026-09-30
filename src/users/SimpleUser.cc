@@ -35,6 +35,9 @@ void SimpleUser::initialize(){
     CPU_CYCLES = par("CPU_CYCLES").intValue();
     QUEUE_SIZE = par("QUEUE_SIZE").intValue();
 
+    MIN_TASK_S = par("MIN_TASK_S").intValue();
+    MAX_TASK_S = par("MAX_TASK_S").intValue();
+
     if(getParentModule()->isVector() == 0)
         NODE_ID = getIndex();
     else

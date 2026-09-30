@@ -48,22 +48,30 @@
 
 class SimpleUser : public omnetpp::cSimpleModule  {
 private:
+    int CPU_CYCLES;
+    int QUEUE_SIZE;
+
+    int NODE_ID;
+
     const int MIN_TASK_S = 100;
     const int MAX_TASK_S = 10000;
-    omnetpp::cArray task_buffer{"tx_buff"};
+    omnetpp::cQueue task_buffer{"task_buff"};
     omnetpp::cGate *oGate;
 
-    int countMsg = 0;
+    int countMsg = 0, fullq_events = 0;
 
     std::shared_ptr<omnetpp::cMessage> timerEvent = nullptr;
+    omnetpp::cMessage *txCompleteEvent = nullptr;
 
-    Simple_task * getTaskFromId(int Id);
+    //Simple_task * getTaskFromId(int Id);
 
-    omnetpp::simsignal_t offDelaySig;
+    omnetpp::simsignal_t offDelaySig, qLengthSig, qFullEvent;
 protected:
     virtual void initialize() override;
     virtual void handleMessage(omnetpp::cMessage *msg) override;
-    virtual void sendTask();
+    virtual Simple_task * genTask();
+    virtual void sendTask(Simple_task *);
+    virtual bool saveTask(Simple_task *);
     virtual void processResult(Simple_result *);
 
 public:

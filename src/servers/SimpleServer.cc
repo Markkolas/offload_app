@@ -80,10 +80,10 @@ void SimpleServer::handleMessage(cMessage *msg){
             if(queue_buff.remove(core[n_core].packet.get()) == nullptr)
                 throw cRuntimeError("Uh oh, a core tried to delete a nonexisting task");
 
-            Simple_task *task = check_and_cast<Simple_task *>(core[n_core].packet.get()->decapsulate());
+            Simple_task *task = check_and_cast<Simple_task *>(core[n_core].packet.get()->getEncapsulatedPacket());
 
             sendResult(task, dest);
-            delete(task);
+            //delete(task); //NOTE: L2Packet is automatically removed but because task has not been dencapsulated
             core[n_core].packet.reset(findAvailablePacket(n_core));
 
             if(core[n_core].packet != nullptr){
@@ -127,12 +127,12 @@ bool SimpleServer::savePacket(L2multi *packet){
 
 void SimpleServer::sendResult(Simple_task *task, int dest) {
     char resultName[20];
-    snprintf(resultName, sizeof(resultName), "result-%d", task->getTaskId());
+    snprintf(resultName, sizeof(resultName), "%d-result-%d", dest, task->getTaskId());
 
     Simple_result *result = new Simple_result(resultName);
     result->setResultId(task->getTaskId());
     result->setByteLength(uniform(1, 100));
-    result->setTimestamp(getSimulation()->getSimTime());
+    result->setTimestamp(task->getTimestamp());
 
     strcat(resultName, "-L2");
     L2multi *L2packet = new L2multi(resultName);

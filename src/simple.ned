@@ -1,10 +1,37 @@
+// Module interface for mobility sim
+//moduleinterface IMobility
+//{
+//	parameters:
+//	    int posx;
+//	    int posy;
+//	    double velocity;
+//	    double heading;
+//}
+//
+//simple RandomPivot like IMobility
+//{
+//    parameters:
+//	    int posx = default(0);
+//	    int posy = default(0);
+//	    double velocity = default(0);
+//	    double heading = default(0);
+//	    int pivotRadius = default(1);
+//}
+
 simple SimpleUser
 {
     parameters:
         @signal[OffDelay](type="double");
+        @signal[QueueLength](type="int");
+        @signal[QueueFull](type="int");
         @statistic[offDelayStat](title="Offloading delay"; source=OffDelay; record=vector,mean,stats);
+	    @statistic[QueueLengthStat](title="Qeueue length"; source=QueueLength; record=vector,mean);
+	    @statistic[QueueFullStat](title="Queue full events"; source=QueueFull; record=vector);
 
         double tasksPerSecond = default(10);
+
+	    int CPU_CYCLES = default(300);
+	    int QUEUE_SIZE = default(10000);
     gates:
         input in;
         output out;
@@ -16,11 +43,11 @@ simple SimpleServer
         @signal[QueueLength](type="int");
         @signal[QueueFull](type="int");
 	    @statistic[QueueLengthStat](title="Qeueue length"; source=QueueLength; record=vector,mean);
-	    @statistic[QueueFullStat](title="Queue full events"; source=QueueFull; record=vector,count);
+	    @statistic[QueueFullStat](title="Queue full events"; source=QueueFull; record=vector);
 	
 	    int CPU_CYCLES = default(300);
 	    int N_CORES = default(1);
-	    int QUEUE_SIZE = default(100);
+	    int QUEUE_SIZE = default(10000);
 	    int MAX_CLIENTS = default(32);
 	gates:
 	    input in[];

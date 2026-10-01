@@ -1,24 +1,18 @@
 // Module interface for mobility sim
-//moduleinterface IMobility
-//{
-//	parameters:
-//	    int posx;
-//	    int posy;
-//	    double velocity;
-//	    double heading;
-//}
-//
-//simple RandomPivot like IMobility
-//{
-//    parameters:
-//	    int posx = default(0);
-//	    int posy = default(0);
-//	    double velocity = default(0);
-//	    double heading = default(0);
-//	    int pivotRadius = default(1);
-//}
+moduleinterface IMobile
+{
+	parameters:
+	    int posx;
+	    int posy;
+	    double velocity;
+	    double heading;
+	
+	gates:
+	    input in;
+	    output out;
+}
 
-simple SimpleUser
+simple SimpleUser like IMobile //TODO: Compound modules are needed. But first lets do it with only a simple mod.
 {
     parameters:
         @signal[OffDelay](type="double");
@@ -37,6 +31,14 @@ simple SimpleUser
 	    int MAX_TASK_S = default(10000); //Bytes
 	
 	    volatile double traffic_gen = default(exponential(1));
+	
+	    int posx = default(0);
+	    int posy = default(0);
+	    double velocity = default(0);
+	    double heading = default(0);
+	    int pivotRadius = default(200);
+	
+	    double txPower @unit(W) = default(100mW);
     gates:
         input in;
         output out;
@@ -50,7 +52,7 @@ simple SimpleServer
 	    @statistic[QueueLengthStat](title="Qeueue length"; source=QueueLength; record=vector,mean);
 	    @statistic[QueueFullStat](title="Queue full events"; source=QueueFull; record=vector);
 	
-	    int CPU_CYCLES = default(300); //MHz
+	    int CPU_CYCLES = default(2400); //MHz
 	    int N_CORES = default(1);
 	    int QUEUE_SIZE = default(10000); //Tasks
 	    int MAX_CLIENTS = default(32);
@@ -77,7 +79,7 @@ network SimpleNet
     parameters:
         int N_USERS = default(1);
 	submodules:
-	    user[N_USERS]: SimpleUser;
+	    user[N_USERS]: <default("SimpleUser")> like IMobile;
 	    server: SimpleServer;
 	
 	connections:
@@ -85,5 +87,4 @@ network SimpleNet
 	    	user[i].out --> DynDelayCh --> server.in++;
 	  		user[i].in <-- DynDelayCh <-- server.out++;
 	    }
-
 }

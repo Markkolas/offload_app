@@ -54,6 +54,15 @@ private:
     int NODE_ID;
 
     int MIN_TASK_S, MAX_TASK_S;
+
+    int posx, posy, x, y;
+    int pivotRadius;
+    double velocity, heading;
+
+    double txPower;
+    const double n0 = 1.38*1e-23*294*1e6; //Hardcoded T=21ºC and B=1MHz noise
+    double Loss_coeff;
+
     omnetpp::cQueue task_buffer{"task_buff"};
     omnetpp::cGate *oGate;
 
@@ -72,6 +81,7 @@ protected:
     virtual void sendTask(Simple_task *);
     virtual bool saveTask(Simple_task *);
     virtual void processResult(Simple_result *);
+    virtual void pivotAround();
 
 public:
     ~SimpleUser();

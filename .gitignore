@@ -9,3 +9,5 @@
 out/
 src/Makefile
 results/
+*.anf
+.qtenvrc

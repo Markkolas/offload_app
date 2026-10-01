@@ -38,6 +38,18 @@ void SimpleUser::initialize(){
     MIN_TASK_S = par("MIN_TASK_S").intValue();
     MAX_TASK_S = par("MAX_TASK_S").intValue();
 
+    posx = par("posx").intValue();
+    posy = par("posy").intValue();
+    x = posx;
+    y = posy;
+    pivotRadius = par("pivotRadius").intValue();
+    velocity = par("velocity").doubleValue();
+    heading = par("heading").doubleValue();
+
+    txPower = par("txPower").doubleValue();
+
+    Loss_coeff = pow((3*1e8)/(4*M_PI*2.4*1e9), 2); // Hardcoded pathloss f=2.4GHz
+
     if(getParentModule()->isVector() == 0)
         NODE_ID = getIndex();
     else
@@ -58,6 +70,8 @@ void SimpleUser::handleMessage(cMessage *msg){
                 EV << "Task queue in user is full!" << endl;
                 fullq_events++;
                 emit(qFullEvent, fullq_events);
+
+                delete task;
             }
         }
 
@@ -77,7 +91,6 @@ void SimpleUser::handleMessage(cMessage *msg){
             sendTask(check_and_cast<Simple_task *>(task_buffer.pop())); //TODO: pop() or front()??
             scheduleAt(oGate->getChannel()->getTransmissionFinishTime(), msg);
         }
-
     }
     else if(dynamic_cast<L2multi *>(msg) != nullptr){
         char bubbleMessage[100];
@@ -118,7 +131,10 @@ void SimpleUser::sendTask(Simple_task *task){
     L2packet->setSource(NODE_ID);
     L2packet->encapsulate(task);
 
-    send(L2packet, "out");
+    pivotAround(); // Move before transmitting
+    cDatarateChannel *ch = check_and_cast<cDatarateChannel *>(oGate->getChannel());
+    ch->setDatarate(1e6*log2(1+(txPower/n0)*(Loss_coeff/(x*x+y*y)))); // Channel cap. assuming free space loss model
+    send(L2packet, oGate);
 }
 
 bool SimpleUser::saveTask(Simple_task *task){
@@ -141,6 +157,17 @@ void SimpleUser::processResult(Simple_result *result){
     EV << "--- Offloading delay: " << off_delay*1000 << " ms ---";
 
     emit(offDelaySig, off_delay.dbl());
+}
+
+void SimpleUser::pivotAround(){
+    // Just move within a square
+    x = posx + uniform(-pivotRadius, +pivotRadius);
+    y = posy + uniform(-pivotRadius, +pivotRadius);
+
+    while(x == 0 && y == 0){
+        x = posx + uniform(-pivotRadius, +pivotRadius);
+        y = posy + uniform(-pivotRadius, +pivotRadius);
+    }
 }
 
 SimpleUser::~SimpleUser(){

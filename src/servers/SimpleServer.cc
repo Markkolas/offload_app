@@ -108,8 +108,7 @@ simtime_t SimpleServer::processTask(Simple_task *task){
 
     EV << "Processing will be completed after " << pDelay*1000 << " ms\n";
     if(pDelay < 0){
-        // Debug trap
-        EV << "Debug trap" << endl;
+        throw cRuntimeError("Processing delay cannot be negative values");
     }
     return pDelay;
 }
@@ -137,6 +136,7 @@ void SimpleServer::sendResult(Simple_task *task, int dest) {
 
     strcat(resultName, "-L2");
     L2multi *L2packet = new L2multi(resultName);
+    L2packet->setSource(-1); // -1 ID represents server 0,1,2... users.
     L2packet->encapsulate(result);
     send(L2packet, "out", dest);
 }

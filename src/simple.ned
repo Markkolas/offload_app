@@ -30,6 +30,8 @@ simple SimpleUser like IMobile //TODO: Compound modules are needed. But first le
 	    int MIN_TASK_S = default(1000); //Bytes
 	    int MAX_TASK_S = default(10000); //Bytes
 	
+	    double P_OFFLOAD = default(1); // From 0 to 1
+	
 	    volatile double traffic_gen = default(exponential(1));
 	
 	    int posx = default(0);

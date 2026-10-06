@@ -28,7 +28,7 @@ void SimpleUser::initialize(){
 
 
     timerEvent = std::make_shared<cMessage>("TimerEvent");
-    txCompleteEvent = new cMessage("TxCompleteEvent");
+    procCompleteEvent = new cMessage("TxCompleteEvent");
 
     oGate = gate("out");
 
@@ -37,6 +37,8 @@ void SimpleUser::initialize(){
 
     MIN_TASK_S = par("MIN_TASK_S").intValue();
     MAX_TASK_S = par("MAX_TASK_S").intValue();
+
+    P_OFF = par("P_OFFLOAD").doubleValue();
 
     posx = par("posx").intValue();
     posy = par("posy").intValue();
@@ -78,19 +80,33 @@ void SimpleUser::handleMessage(cMessage *msg){
         scheduleAfter(par("tasksGenPeriod").doubleValue(), msg);
 
         // If queue has packets and no packet is being send, send first on queue
-        if(task_buffer.getLength() > 0 && txCompleteEvent->isScheduled() == false)
-            scheduleAt(getSimulation()->getSimTime(), txCompleteEvent);
+        if(task_buffer.getLength() > 0 && procCompleteEvent->isScheduled() == false)
+            scheduleAt(getSimulation()->getSimTime(), procCompleteEvent);
     }
-    else if(msg == txCompleteEvent){
-
-        // Check if channel is available
-        if(oGate->getChannel()->isBusy())
-            throw cRuntimeError("Channel is busy for transmission. This should never happen.");
+    else if(msg == procCompleteEvent){
 
         if(task_buffer.getLength() > 0){
-            sendTask(check_and_cast<Simple_task *>(task_buffer.pop())); //TODO: pop() or front()??
-            scheduleAt(oGate->getChannel()->getTransmissionFinishTime(), msg);
+            //Throw a coin to offload or not
+            if(binomial(1, P_OFF)){
+                // Check if channel is available
+                if(oGate->getChannel()->isBusy())
+                    throw cRuntimeError("Channel is busy for transmission. This should never happen.");
+
+                sendTask(check_and_cast<Simple_task *>(task_buffer.pop())); //TODO: pop() or front()??
+                scheduleAt(oGate->getChannel()->getTransmissionFinishTime(), msg);
+
+            }
+            else{
+                // Local processing of the task. Similar process to the server
+                Simple_task *task = check_and_cast<Simple_task *>(task_buffer.pop());
+                simtime_t pDelay = processTask(task);
+                scheduleResult(task, pDelay);
+                scheduleAfter(pDelay, msg);
+
+                delete task;
+            }
         }
+
     }
     else if(dynamic_cast<L2multi *>(msg) != nullptr){
         char bubbleMessage[100];
@@ -149,6 +165,37 @@ bool SimpleUser::saveTask(Simple_task *task){
     return is_full;
 }
 
+simtime_t SimpleUser::processTask(Simple_task *task){
+    EV << "Starting offload process on user: " << NODE_ID << endl;
+
+    // I need to be carefull with data types in operations
+    double ideal_delay = (double)(8*task->getByteLength())/(double)(CPU_CYCLES); //microseconds (MHz)
+    simtime_t pDelay = simtime_t((ideal_delay*task->getComplexityFactor())/(1e6));
+
+    EV << "Task: " << task->getName() << "\nProcessing will be completed after " << pDelay*1000 << "ms" << endl;
+    if(pDelay < 0){
+        throw cRuntimeError("Processing delay cannot be negative values");
+    }
+
+    return pDelay;
+}
+
+void SimpleUser::scheduleResult(Simple_task *task, simtime_t pDelay){
+    char resultName[20];
+    snprintf(resultName, sizeof(resultName), "%d-result-%d", NODE_ID, task->getTaskId());
+
+    Simple_result *result = new Simple_result(resultName);
+    result->setResultId(task->getTaskId());
+    result->setByteLength(uniform(1, 100));
+    result->setTimestamp(task->getTimestamp());
+
+    strcat(resultName, "-L2");
+    L2multi *L2packet = new L2multi(resultName);
+    L2packet->setSource(NODE_ID);
+    L2packet->encapsulate(result);
+    scheduleAfter(pDelay, L2packet);
+}
+
 void SimpleUser::processResult(Simple_result *result){
     EV << result->getName() << " received. Finding offloading delay\n";
 
@@ -172,9 +219,9 @@ void SimpleUser::pivotAround(){
 
 SimpleUser::~SimpleUser(){
     cancelEvent(timerEvent.get());
-    cancelEvent(txCompleteEvent);
+    cancelEvent(procCompleteEvent);
     timerEvent = nullptr; // Smart pointer working in a very unamazing way
-    delete txCompleteEvent;
+    delete procCompleteEvent;
 }
 
 //Simple_task * SimpleUser::getTaskFromId(int Id){

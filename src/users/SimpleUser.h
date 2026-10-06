@@ -55,6 +55,8 @@ private:
 
     int MIN_TASK_S, MAX_TASK_S;
 
+    double P_OFF;
+
     int posx, posy, x, y;
     int pivotRadius;
     double velocity, heading;
@@ -63,13 +65,14 @@ private:
     const double n0 = 1.38*1e-23*294*1e6; //Hardcoded T=21ºC and B=1MHz noise
     double Loss_coeff;
 
+
     omnetpp::cQueue task_buffer{"task_buff"};
     omnetpp::cGate *oGate;
 
     int countMsg = 0, fullq_events = 0;
 
     std::shared_ptr<omnetpp::cMessage> timerEvent = nullptr;
-    omnetpp::cMessage *txCompleteEvent = nullptr;
+    omnetpp::cMessage *procCompleteEvent = nullptr;
 
     //Simple_task * getTaskFromId(int Id);
 
@@ -80,6 +83,8 @@ protected:
     virtual Simple_task * genTask();
     virtual void sendTask(Simple_task *);
     virtual bool saveTask(Simple_task *);
+    omnetpp::simtime_t processTask(Simple_task *);
+    void scheduleResult(Simple_task *, omnetpp::simtime_t);
     virtual void processResult(Simple_result *);
     virtual void pivotAround();
 
